@@ -142,18 +142,41 @@ void render()
             if (cell != ' ')
             {
                 int cellInt = (int)cell - (int)'0';
+                int texid = cellInt;
                 int column_height = float_to_int(RENDER_HEIGHT / (t * MathF.Cos(angle - player_a)));
 
                 var color = To_Raylib_Color(((Bitmap)wallTextures).GetPixel(cellInt  * wallTextureSize, 0));
-                    
+
+                float hitx = cx - MathF.Floor(cx + 0.5f); // hitx and hity contain (signed) fractional parts of cx and cy,
+                float hity = cy - MathF.Floor(cy + 0.5f); // they vary between -0.5 and +0.5, and one of them is supposed to be very close to 0
+                int x_texcoord = float_to_int(hitx * wallTextureSize);
+
+                if (MathF.Abs(hity) > MathF.Abs(hitx)) // we need to determine whether we hit a "vertical" or a "horizontal" wall (w.r.t the map)
+                {
+                    x_texcoord = float_to_int(hity * wallTextureSize);
+                }
+
+                if (x_texcoord < 0) x_texcoord += wallTextureSize; //do not forget x_texcoord can be negative, fix that
+
+                var column = texture_column(texid, x_texcoord, column_height);
+
+                pix_x = RENDER_WIDTH / 2 + i;
+
+                for (int j = 0; j < column_height; j++)
+                {
+                    pix_y = j + RENDER_HEIGHT / 2 - column_height / 2;
+                    if (pix_y < 0 || pix_y >= RENDER_HEIGHT) continue;
+                    write_color(pix_x, pix_y, column[j]);
+                }
+
 
                 //divide por 2 pois comeca a desenhar somente na metade da tela. a primeira metade é o mapa.
-                draw_rectangle(
+                /*draw_rectangle(
                     WINDOW_WIDTH / 2 + i,
                     WINDOW_HEIGHT / 2 - column_height / 2,
                     1,
                     column_height,
-                    color);
+                    color);*/
 
                 break;
             }
@@ -206,6 +229,21 @@ void draw_rectangle(int x, int y, int w, int h, Raylib_cs.Color color)
             write_color(cx, cy, color);            
         }
     }
+}
+
+Raylib_cs.Color[] texture_column(int texid, int texcoord, int column_height)
+{
+    Raylib_cs.Color[] column = new Raylib_cs.Color[column_height];
+
+    for (int y = 0; y < column_height; y++)
+    {
+        int  pix_x = texid * wallTextureSize + texcoord;
+        int pix_y = (y * wallTextureSize) / column_height;
+
+        column[y] = To_Raylib_Color(((Bitmap)wallTextures).GetPixel(pix_x, pix_y));
+    }
+
+    return column;
 }
 
 int float_to_int(float num)
