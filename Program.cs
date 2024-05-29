@@ -11,6 +11,9 @@ const int RENDER_HEIGHT = 512;
 const int WINDOW_WIDTH = RENDER_WIDTH;
 const int WINDOW_HEIGHT = RENDER_WIDTH;
 
+float player_x = 3.456f;
+float player_y = 2.345f;
+
 const int map_w = 16; // map width
 const int map_h = 16; // map height
 string map = "0000222222220000" +
@@ -106,6 +109,9 @@ void render()
             draw_rectangle(rect_x, rect_y, rect_w, rect_h, new Color(0, 255, 255, 255));
         }
     }
+
+    //draw the player on the map
+    draw_rectangle(Convert.ToInt32(player_x * rect_w), Convert.ToInt32(player_y * rect_h), 5, 5, new Color(255, 255, 255, 255));
 
     //for 
 
