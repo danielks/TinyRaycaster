@@ -10,8 +10,8 @@ using static System.Net.Mime.MediaTypeNames;
 
 
 
-const int RENDER_WIDTH = 1000;
-const int RENDER_HEIGHT = 500;
+const int RENDER_WIDTH = 2000;
+const int RENDER_HEIGHT = 1000;
 const int WINDOW_WIDTH = RENDER_WIDTH;
 const int WINDOW_HEIGHT = RENDER_HEIGHT;
 
@@ -25,9 +25,28 @@ string wallTexturesFilePath = @"C:\Users\danie\source\repos\TinyRaycaster\resour
 var wallTextures = Bitmap.FromFile(wallTexturesFilePath);
 
 int wallTextureSize = wallTextures.Height; //square
+
+
+
+
 int wallTexturesCount = wallTextures.Width / wallTextures.Height;
 
+List<Raylib_cs.Color[,]> wallTextures2 = new List<Raylib_cs.Color[,]>();
 
+for (int i = 0; i < wallTexturesCount; i++)
+{
+    var tex = new Raylib_cs.Color[wallTextureSize, wallTextureSize];
+
+    for (int x = 0; x < wallTextureSize; x++)
+    {
+        for (int y = 0; y < wallTextureSize; y++)
+        {
+            tex[x, y] = To_Raylib_Color(((Bitmap)(wallTextures)).GetPixel(x + (i * wallTextureSize), y));
+        }
+    }
+
+    wallTextures2.Add(tex);
+}
 
 
 
@@ -109,7 +128,7 @@ void render()
         }
     }
 
-    player_a += 0.0005f;
+    player_a += 0.005f;
 
     //draw the player on the map
     draw_rectangle(Convert.ToInt32(player_x * rect_w), Convert.ToInt32(player_y * rect_h), 5, 5, new Raylib_cs.Color(255, 255, 255, 255));
@@ -237,10 +256,15 @@ Raylib_cs.Color[] texture_column(int texid, int texcoord, int column_height)
 
     for (int y = 0; y < column_height; y++)
     {
-        int  pix_x = texid * wallTextureSize + texcoord;
+        /*int  pix_x = texid * wallTextureSize + texcoord;
         int pix_y = (y * wallTextureSize) / column_height;
 
-        column[y] = To_Raylib_Color(((Bitmap)wallTextures).GetPixel(pix_x, pix_y));
+        column[y] = To_Raylib_Color(((Bitmap)wallTextures).GetPixel(pix_x, pix_y));*/
+
+        int pix_x = texcoord;
+        int pix_y = (y * wallTextureSize) / column_height;
+
+        column[y] = wallTextures2[texid][pix_x, pix_y];
     }
 
     return column;
