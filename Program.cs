@@ -2,9 +2,13 @@
 using System;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Drawing;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using static System.Net.Mime.MediaTypeNames;
+
+
+
 
 const int RENDER_WIDTH = 1000;
 const int RENDER_HEIGHT = 500;
@@ -16,16 +20,16 @@ float player_y = 2.345f;
 float player_a = 1.523f; //angle the player is facing (the angle between the view direction and the x axis).
 const float fov = MathF.PI / 3.0f;
 
+string wallTexturesFilePath = @"C:\Users\danie\source\repos\TinyRaycaster\resources\textures.bmp";
+
+var wallTextures = Bitmap.FromFile(wallTexturesFilePath);
+
+int wallTextureSize = wallTextures.Height; //square
+int wallTexturesCount = wallTextures.Width / wallTextures.Height;
 
 
-Random rnd = new Random();
 
-Color[] colors = new Color[10];
 
-for (int i = 0; i < colors.Length; i++)
-{
-    colors[i] = new Color((byte)rnd.Next(255), (byte)rnd.Next(255), (byte)rnd.Next(255), (byte)255);
-}
 
 const int map_w = 16; // map width
 const int map_h = 16; // map height
@@ -61,7 +65,7 @@ while (!Raylib.WindowShouldClose())
     sw.Restart();
 
     Raylib.BeginDrawing();
-    Raylib.ClearBackground(Color.White);
+    Raylib.ClearBackground(Raylib_cs.Color.White);
 
     render();
 
@@ -96,8 +100,10 @@ void render()
 
             int rect_x = i * rect_w;
             int rect_y = j * rect_h;
-            Color color = colors[(int)cell - (int)'0'];
 
+            int cellInt = (int)cell - (int)'0';
+
+            var color = To_Raylib_Color(((Bitmap)wallTextures).GetPixel(cellInt * wallTextureSize, 0));
 
             draw_rectangle(rect_x, rect_y, rect_w, rect_h, color);
         }
@@ -106,7 +112,7 @@ void render()
     player_a += 0.0005f;
 
     //draw the player on the map
-    draw_rectangle(Convert.ToInt32(player_x * rect_w), Convert.ToInt32(player_y * rect_h), 5, 5, new Color(255, 255, 255, 255));
+    draw_rectangle(Convert.ToInt32(player_x * rect_w), Convert.ToInt32(player_y * rect_h), 5, 5, new Raylib_cs.Color(255, 255, 255, 255));
 
     //draw the visibility cone
     for (int i = 0; i < RENDER_WIDTH / 2; i++)
@@ -126,16 +132,20 @@ void render()
 
 
             //this draws the visibility cone
-            write_color(pix_x, pix_y, new Color(160, 160, 160, 255));
+            write_color(pix_x, pix_y, new Raylib_cs.Color(160, 160, 160, 255));
 
             char cell = map[float_to_int(cx) + float_to_int(cy) * map_w];
+
+            
 
             //our ray touches a wall, so draw the vertical column to create an illusion of 3D.
             if (cell != ' ')
             {
+                int cellInt = (int)cell - (int)'0';
                 int column_height = float_to_int(RENDER_HEIGHT / (t * MathF.Cos(angle - player_a)));
-                
-                Color color = colors[(int)cell - (int)'0'];
+
+                var color = To_Raylib_Color(((Bitmap)wallTextures).GetPixel(cellInt  * wallTextureSize, 0));
+                    
 
                 //divide por 2 pois comeca a desenhar somente na metade da tela. a primeira metade é o mapa.
                 draw_rectangle(
@@ -149,8 +159,6 @@ void render()
             }
         }
     }
-
-    //for 
 
     Raylib_cs.Image i2 = new Raylib_cs.Image
     {
@@ -167,13 +175,13 @@ void render()
         fixed (byte* bPtr = &buffer[0])
         {
             Raylib.UpdateTexture(t2, bPtr);
-            Raylib.DrawTexture(t2, 0, 0, Color.White);            
+            Raylib.DrawTexture(t2, 0, 0, Raylib_cs.Color.White);            
         }
     }
 }
 
 
-void write_color(int x, int y, Color pixel_color)
+void write_color(int x, int y, Raylib_cs.Color pixel_color)
 {   
     int idx = (y * RENDER_WIDTH + x) * 4;
 
@@ -183,7 +191,7 @@ void write_color(int x, int y, Color pixel_color)
     buffer[idx + 3] = 255;
 }
 
-void draw_rectangle(int x, int y, int w, int h, Color color)
+void draw_rectangle(int x, int y, int w, int h, Raylib_cs.Color color)
 {
     
     for (int i = 0; i < w; i++)
@@ -204,4 +212,9 @@ int float_to_int(float num)
 {
     //acredito que esse seja o comportamento da versao do artigo
     return Convert.ToInt32(MathF.Floor(num));
+}
+
+Raylib_cs.Color To_Raylib_Color(System.Drawing.Color color)
+{   
+    return new Raylib_cs.Color(color.R, color.G, color.B, color.A);
 }
