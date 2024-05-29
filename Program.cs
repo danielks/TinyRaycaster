@@ -6,10 +6,10 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using static System.Net.Mime.MediaTypeNames;
 
-const int RENDER_WIDTH = 512;
-const int RENDER_HEIGHT = 512;
+const int RENDER_WIDTH = 1000;
+const int RENDER_HEIGHT = 500;
 const int WINDOW_WIDTH = RENDER_WIDTH;
-const int WINDOW_HEIGHT = RENDER_WIDTH;
+const int WINDOW_HEIGHT = RENDER_HEIGHT;
 
 float player_x = 3.456f;
 float player_y = 2.345f;
@@ -35,7 +35,7 @@ string map = "0000222222220000" +
              "0              0" +
              "0002222222200000"; // our game map
 
-Raylib.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Tiny Raytracer");
+Raylib.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Tiny Raycaster");
 
 Byte[] buffer = new byte[RENDER_WIDTH * RENDER_HEIGHT * 4]; //4 bytes per pixel
 
@@ -71,32 +71,9 @@ Raylib.CloseWindow();
 
 void render()
 {
-    for (int j = 0; j < RENDER_HEIGHT; j++)
-    //Parallel.For(0, renderHeight, new ParallelOptions { MaxDegreeOfParallelism = 6 }, ty =>
+    Array.Clear(buffer, 0, buffer.Length);
 
-    {
-        for (int i = 0; i < RENDER_WIDTH; i++)
-        //Parallel.For(0, renderWidth, x =>    
-        {
-            //o y no Raylib comeca de cima pra baixo. no GLSL comeca de baixo pra cima. entao trocamos aqui.
-
-
-            Color pixel_color = Color.Red;
-
-            byte r = Convert.ToByte(255.0f * ((float)j / (float)RENDER_HEIGHT)); // varies between 0 and 255 as j sweeps the vertical
-            byte g = Convert.ToByte(255.0f * ((float)i / (float)RENDER_WIDTH)); // varies between 0 and 255 as i sweeps the horizontal
-            byte b = 0;
-            pixel_color = new Color(r, g, b, (byte)255);
-
-            //framebuffer[i + j * win_w] = pack_color(r, g, b);
-
-            write_color(i, j, pixel_color);
-        }
-        //});
-    }
-    //});
-
-    const int rect_w = RENDER_WIDTH / map_w;
+    const int rect_w = RENDER_WIDTH / (map_w * 2); //render map on half the screen
     const int rect_h = RENDER_HEIGHT / map_h;
 
     for (int j = 0; j < map_h; j++)
@@ -112,25 +89,46 @@ void render()
         }
     }
 
+    //player_a += 0.002f;
+
     //draw the player on the map
     draw_rectangle(Convert.ToInt32(player_x * rect_w), Convert.ToInt32(player_y * rect_h), 5, 5, new Color(255, 255, 255, 255));
 
     //draw the visibility cone
-    for (int i = 0; i < RENDER_WIDTH; i++)
+    for (int i = 0; i < RENDER_WIDTH / 2; i++)
     {
-        float angle = player_a - fov / 2 + fov * i / (float)RENDER_WIDTH;
+        float angle = player_a - fov / 2 + fov * i / ((float)(RENDER_WIDTH / 2));
+        //float angle = player_a - fov / 2 + fov * i / ((float)(RENDER_WIDTH));
         //makes a line in the direction the player is facing. stops if hits an obstacle.
         for (float t = 0.0f; t < 20.0f; t += 0.05f)
         {
             float cx = player_x + t * MathF.Cos(angle);
             float cy = player_y + t * MathF.Sin(angle);
 
-            if (map[float_to_int(cx) + float_to_int(cy) * map_w] != ' ') break;
+            //if (map[float_to_int(cx) + float_to_int(cy) * map_w] != ' ') break;
 
             int pix_x = Convert.ToInt32(cx * rect_w);
             int pix_y = Convert.ToInt32(cy * rect_h);
 
-            write_color(pix_x, pix_y, Color.White);
+
+            //this draws the visibility cone
+            write_color(pix_x, pix_y, new Color(160, 160, 160, 255));
+
+            //our ray touches a wall, so draw the vertical column to create an illusion of 3D.
+            if (map[float_to_int(cx) + float_to_int(cy) * map_w] != ' ')
+            {
+                int column_height = float_to_int((float)RENDER_HEIGHT / t);
+
+                //divide por 2 pois comeca a desenhar somente na metade da tela. a primeira metade é o mapa.
+                draw_rectangle(
+                    WINDOW_WIDTH / 2 + i,
+                    WINDOW_HEIGHT / 2 - column_height / 2,
+                    1,
+                    column_height,
+                    new Color(0, 255, 255, 255));
+
+                break;
+            }
         }
     }
 
@@ -175,7 +173,9 @@ void draw_rectangle(int x, int y, int w, int h, Color color)
         for (int j = 0; j < h; j++)
         {
             int cx = x + i;
-            int  cy = y + j;
+            int cy = y + j;
+
+            if (cx >= RENDER_WIDTH || cy >= RENDER_HEIGHT) continue;
             
             write_color(cx, cy, color);            
         }
