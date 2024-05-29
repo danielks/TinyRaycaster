@@ -13,6 +13,7 @@ const int WINDOW_HEIGHT = RENDER_WIDTH;
 
 float player_x = 3.456f;
 float player_y = 2.345f;
+float player_a = 1.523f; //angle the player is facing (the angle between the view direction and the x axis).
 
 const int map_w = 16; // map width
 const int map_h = 16; // map height
@@ -113,6 +114,22 @@ void render()
     //draw the player on the map
     draw_rectangle(Convert.ToInt32(player_x * rect_w), Convert.ToInt32(player_y * rect_h), 5, 5, new Color(255, 255, 255, 255));
 
+    //player_a += 0.001f;
+
+    //makes a line in the direction the player is facing. stops if hits an obstacle.
+    for (float t = 0.0f; t < 20.0f; t += 0.05f)
+    {
+        float cx = player_x + t * MathF.Cos(player_a);
+        float cy = player_y + t * MathF.Sin(player_a);
+
+        if (map[float_to_int(cx) + float_to_int(cy) * map_w] != ' ') break;
+
+        int pix_x = Convert.ToInt32(cx * rect_w);
+        int pix_y = Convert.ToInt32(cy * rect_h);
+
+        write_color(pix_x, pix_y, Color.White);
+    }
+
     //for 
 
     Raylib_cs.Image i2 = new Raylib_cs.Image
@@ -159,4 +176,10 @@ void draw_rectangle(int x, int y, int w, int h, Color color)
             write_color(cx, cy, color);            
         }
     }
+}
+
+int float_to_int(float num)
+{
+    //acredito que esse seja o comportamento da versao do artigo
+    return Convert.ToInt32(MathF.Floor(num));
 }
