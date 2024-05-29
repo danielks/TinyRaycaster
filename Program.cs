@@ -133,8 +133,8 @@ void render()
             //our ray touches a wall, so draw the vertical column to create an illusion of 3D.
             if (cell != ' ')
             {
-                int column_height = float_to_int((float)RENDER_HEIGHT / t);
-
+                int column_height = float_to_int(RENDER_HEIGHT / (t * MathF.Cos(angle - player_a)));
+                
                 Color color = colors[(int)cell - (int)'0'];
 
                 //divide por 2 pois comeca a desenhar somente na metade da tela. a primeira metade é o mapa.
