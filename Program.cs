@@ -16,6 +16,17 @@ float player_y = 2.345f;
 float player_a = 1.523f; //angle the player is facing (the angle between the view direction and the x axis).
 const float fov = MathF.PI / 3.0f;
 
+
+
+Random rnd = new Random();
+
+Color[] colors = new Color[10];
+
+for (int i = 0; i < colors.Length; i++)
+{
+    colors[i] = new Color((byte)rnd.Next(255), (byte)rnd.Next(255), (byte)rnd.Next(255), (byte)255);
+}
+
 const int map_w = 16; // map width
 const int map_h = 16; // map height
 string map = "0000222222220000" +
@@ -80,16 +91,19 @@ void render()
     {
         for (int i = 0; i < map_w; i++)
         {
-            if (map[i + j * map_w] == ' ') continue;
+            char cell = map[i + j * map_w];
+            if (cell == ' ') continue;
 
             int rect_x = i * rect_w;
             int rect_y = j * rect_h;
+            Color color = colors[(int)cell - (int)'0'];
 
-            draw_rectangle(rect_x, rect_y, rect_w, rect_h, new Color(0, 255, 255, 255));
+
+            draw_rectangle(rect_x, rect_y, rect_w, rect_h, color);
         }
     }
 
-    //player_a += 0.002f;
+    player_a += 0.0005f;
 
     //draw the player on the map
     draw_rectangle(Convert.ToInt32(player_x * rect_w), Convert.ToInt32(player_y * rect_h), 5, 5, new Color(255, 255, 255, 255));
@@ -114,10 +128,14 @@ void render()
             //this draws the visibility cone
             write_color(pix_x, pix_y, new Color(160, 160, 160, 255));
 
+            char cell = map[float_to_int(cx) + float_to_int(cy) * map_w];
+
             //our ray touches a wall, so draw the vertical column to create an illusion of 3D.
-            if (map[float_to_int(cx) + float_to_int(cy) * map_w] != ' ')
+            if (cell != ' ')
             {
                 int column_height = float_to_int((float)RENDER_HEIGHT / t);
+
+                Color color = colors[(int)cell - (int)'0'];
 
                 //divide por 2 pois comeca a desenhar somente na metade da tela. a primeira metade é o mapa.
                 draw_rectangle(
@@ -125,7 +143,7 @@ void render()
                     WINDOW_HEIGHT / 2 - column_height / 2,
                     1,
                     column_height,
-                    new Color(0, 255, 255, 255));
+                    color);
 
                 break;
             }
