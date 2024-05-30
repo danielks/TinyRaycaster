@@ -16,10 +16,11 @@ const int RENDER_HEIGHT = 1500;
 const int WINDOW_WIDTH = RENDER_WIDTH;
 const int WINDOW_HEIGHT = RENDER_HEIGHT;
 
-float player_x = 3.456f;
-float player_y = 2.345f;
-float player_a = 1.523f; //angle the player is facing (the angle between the view direction and the x axis).
-const float fov = MathF.PI / 3.0f;
+Player player = new Player();
+player.X = 3.456f;
+player.Y = 2.345f;
+player.A = 1.523f; //angle the player is facing (the angle between the view direction and the x axis).
+player.FOV = MathF.PI / 3.0f;
 
 string wallTexturesFilePath = @"C:\Users\danie\source\repos\TinyRaycaster\resources\textures.bmp";
 
@@ -113,22 +114,22 @@ void render()
         }
     }
 
-    player_a += 0.005f;
+    player.A += 0.005f;
 
     //draw the player on the map
-    frameBuffer.DrawRectangle(Convert.ToInt32(player_x * rect_w), Convert.ToInt32(player_y * rect_h), 5, 5, new Raylib_cs.Color(255, 255, 255, 255));
+    frameBuffer.DrawRectangle(Convert.ToInt32(player.X * rect_w), Convert.ToInt32(player.Y * rect_h), 5, 5, new Raylib_cs.Color(255, 255, 255, 255));
 
     //draw the visibility cone
     for (int i = 0; i < RENDER_WIDTH / 2; i++)
     //Parallel.For(0, RENDER_WIDTH / 2, (i) =>
     {
-        float angle = player_a - fov / 2 + fov * i / ((float)(RENDER_WIDTH / 2));
+        float angle = player.A - player.FOV / 2 + player.FOV * i / ((float)(RENDER_WIDTH / 2));
         //float angle = player_a - fov / 2 + fov * i / ((float)(RENDER_WIDTH));
         //makes a line in the direction the player is facing. stops if hits an obstacle.
         for (float t = 0.0f; t < 20.0f; t += 0.05f)
         {
-            float cx = player_x + t * MathF.Cos(angle);
-            float cy = player_y + t * MathF.Sin(angle);
+            float cx = player.X + t * MathF.Cos(angle);
+            float cy = player.Y + t * MathF.Sin(angle);
 
             //if (map[float_to_int(cx) + float_to_int(cy) * map_w] != ' ') break;
 
@@ -145,7 +146,7 @@ void render()
                 int cell = map.Get(float_to_int(cx), float_to_int(cy));
                 int texid = cell;
 
-                int column_height = float_to_int(RENDER_HEIGHT / (t * MathF.Cos(angle - player_a)));                
+                int column_height = float_to_int(RENDER_HEIGHT / (t * MathF.Cos(angle - player.A)));                
 
                 float hitx = cx - MathF.Floor(cx + 0.5f); // hitx and hity contain (signed) fractional parts of cx and cy,
                 float hity = cy - MathF.Floor(cy + 0.5f); // they vary between -0.5 and +0.5, and one of them is supposed to be very close to 0
