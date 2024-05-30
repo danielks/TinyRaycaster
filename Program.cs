@@ -24,34 +24,10 @@ player.FOV = MathF.PI / 3.0f;
 
 string wallTexturesFilePath = @"C:\Users\danie\source\repos\TinyRaycaster\resources\textures.bmp";
 
-var wallTextures = Bitmap.FromFile(wallTexturesFilePath);
+var wallTextures = new Texture(wallTexturesFilePath);
 
-int wallTextureSize = wallTextures.Height; //square
 
 FrameBuffer frameBuffer = new FrameBuffer(RENDER_WIDTH, RENDER_HEIGHT);
-
-
-
-int wallTexturesCount = wallTextures.Width / wallTextures.Height;
-
-List<Raylib_cs.Color[,]> wallTextures2 = new List<Raylib_cs.Color[,]>();
-
-for (int i = 0; i < wallTexturesCount; i++)
-{
-    var tex = new Raylib_cs.Color[wallTextureSize, wallTextureSize];
-
-    for (int x = 0; x < wallTextureSize; x++)
-    {
-        for (int y = 0; y < wallTextureSize; y++)
-        {
-            tex[x, y] = To_Raylib_Color(((Bitmap)(wallTextures)).GetPixel(x + (i * wallTextureSize), y));
-        }
-    }
-
-    wallTextures2.Add(tex);
-}
-
-
 
 const int map_w = 16; // map width
 const int map_h = 16; // map height
@@ -108,7 +84,7 @@ void render()
             int rect_x = i * rect_w;
             int rect_y = j * rect_h;            
 
-            var color = To_Raylib_Color(((Bitmap)wallTextures).GetPixel(cell * wallTextureSize, 0));
+            var color = wallTextures.Get(0, 0, cell);
 
             frameBuffer.DrawRectangle(rect_x, rect_y, rect_w, rect_h, color);
         }
@@ -141,25 +117,25 @@ void render()
             frameBuffer.SetPixel(pix_x, pix_y, new Raylib_cs.Color(160, 160, 160, 255));
 
             //our ray touches a wall, so draw the vertical column to create an illusion of 3D.
-            if (!map.IsEmpty(float_to_int(cx), float_to_int(cy)))
+            if (!map.IsEmpty(Util.float_to_int(cx), Util.float_to_int(cy)))
             {
-                int cell = map.Get(float_to_int(cx), float_to_int(cy));
+                int cell = map.Get(Util.float_to_int(cx), Util.float_to_int(cy));
                 int texid = cell;
 
-                int column_height = float_to_int(RENDER_HEIGHT / (t * MathF.Cos(angle - player.A)));                
+                int column_height = Util.float_to_int(RENDER_HEIGHT / (t * MathF.Cos(angle - player.A)));                
 
                 float hitx = cx - MathF.Floor(cx + 0.5f); // hitx and hity contain (signed) fractional parts of cx and cy,
                 float hity = cy - MathF.Floor(cy + 0.5f); // they vary between -0.5 and +0.5, and one of them is supposed to be very close to 0
-                int x_texcoord = float_to_int(hitx * wallTextureSize);
+                int x_texcoord = Util.float_to_int(hitx * wallTextures.Size);
 
                 if (MathF.Abs(hity) > MathF.Abs(hitx)) // we need to determine whether we hit a "vertical" or a "horizontal" wall (w.r.t the map)
                 {
-                    x_texcoord = float_to_int(hity * wallTextureSize);
+                    x_texcoord = Util.float_to_int(hity * wallTextures.Size);
                 }
 
-                if (x_texcoord < 0) x_texcoord += wallTextureSize; //do not forget x_texcoord can be negative, fix that
+                if (x_texcoord < 0) x_texcoord += wallTextures.Size; //do not forget x_texcoord can be negative, fix that
 
-                var column = texture_column(texid, x_texcoord, column_height);
+                var column = wallTextures.GetScaledColumn(texid, x_texcoord, column_height);
 
                 pix_x = RENDER_WIDTH / 2 + i;
 
@@ -203,38 +179,4 @@ void render()
             Raylib.DrawTexture(t2, 0, 0, Raylib_cs.Color.White);            
         }
     }
-}
-
-
-
-
-Raylib_cs.Color[] texture_column(int texid, int texcoord, int column_height)
-{
-    Raylib_cs.Color[] column = new Raylib_cs.Color[column_height];
-
-    for (int y = 0; y < column_height; y++)
-    {
-        /*int  pix_x = texid * wallTextureSize + texcoord;
-        int pix_y = (y * wallTextureSize) / column_height;
-
-        column[y] = To_Raylib_Color(((Bitmap)wallTextures).GetPixel(pix_x, pix_y));*/
-
-        int pix_x = texcoord;
-        int pix_y = (y * wallTextureSize) / column_height;
-
-        column[y] = wallTextures2[texid][pix_x, pix_y];
-    }
-
-    return column;
-}
-
-int float_to_int(float num)
-{
-    //acredito que esse seja o comportamento da versao do artigo
-    return Convert.ToInt32(MathF.Floor(num));
-}
-
-Raylib_cs.Color To_Raylib_Color(System.Drawing.Color color)
-{   
-    return new Raylib_cs.Color(color.R, color.G, color.B, color.A);
 }
