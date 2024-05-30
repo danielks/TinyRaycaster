@@ -30,6 +30,7 @@ int wallTextureSize = wallTextures.Height; //square
 FrameBuffer frameBuffer = new FrameBuffer(RENDER_WIDTH, RENDER_HEIGHT);
 
 
+
 int wallTexturesCount = wallTextures.Width / wallTextures.Height;
 
 List<Raylib_cs.Color[,]> wallTextures2 = new List<Raylib_cs.Color[,]>();
@@ -53,26 +54,9 @@ for (int i = 0; i < wallTexturesCount; i++)
 
 const int map_w = 16; // map width
 const int map_h = 16; // map height
-string map = "0000222222220000" +
-             "1              0" +
-             "1      11111   0" +
-             "1     0        0" +
-             "0     0  1110000" +
-             "0     3        0" +
-             "0   10000      0" +
-             "0   0   11100  0" +
-             "0   0   0      0" +
-             "0   0   1  00000" +
-             "0       1      0" +
-             "2       1      0" +
-             "0       0      0" +
-             "0 0000000      0" +
-             "0              0" +
-             "0002222222200000"; // our game map
+Map map = new Map(map_w, map_h);
 
 Raylib.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Tiny Raycaster");
-
-
 
 long frameCount = 0;
 
@@ -115,15 +99,15 @@ void render()
     {
         for (int i = 0; i < map_w; i++)
         {
-            char cell = map[i + j * map_w];
-            if (cell == ' ') continue;
+            
+            if (map.IsEmpty(i, j)) continue;
+
+            int cell = map.Get(i, j);
 
             int rect_x = i * rect_w;
-            int rect_y = j * rect_h;
+            int rect_y = j * rect_h;            
 
-            int cellInt = (int)cell - (int)'0';
-
-            var color = To_Raylib_Color(((Bitmap)wallTextures).GetPixel(cellInt * wallTextureSize, 0));
+            var color = To_Raylib_Color(((Bitmap)wallTextures).GetPixel(cell * wallTextureSize, 0));
 
             frameBuffer.DrawRectangle(rect_x, rect_y, rect_w, rect_h, color);
         }
@@ -155,15 +139,12 @@ void render()
             //this draws the visibility cone
             frameBuffer.SetPixel(pix_x, pix_y, new Raylib_cs.Color(160, 160, 160, 255));
 
-            char cell = map[float_to_int(cx) + float_to_int(cy) * map_w];
-
-
-
             //our ray touches a wall, so draw the vertical column to create an illusion of 3D.
-            if (cell != ' ')
+            if (!map.IsEmpty(float_to_int(cx), float_to_int(cy)))
             {
-                int cellInt = (int)cell - (int)'0';
-                int texid = cellInt;
+                int cell = map.Get(float_to_int(cx), float_to_int(cy));
+                int texid = cell;
+
                 int column_height = float_to_int(RENDER_HEIGHT / (t * MathF.Cos(angle - player_a)));                
 
                 float hitx = cx - MathF.Floor(cx + 0.5f); // hitx and hity contain (signed) fractional parts of cx and cy,
